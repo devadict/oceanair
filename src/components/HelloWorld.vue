@@ -1,61 +1,92 @@
 <template>
-  <div class="hello">
-    <h1>{{ msg }}</h1>
-    <p>
-      For a guide and recipes on how to configure / customize this project,<br>
-      check out the
-      <a href="https://cli.vuejs.org" target="_blank" rel="noopener">vue-cli documentation</a>.
-    </p>
-    <h3>Installed CLI Plugins</h3>
-    <ul>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-babel" target="_blank" rel="noopener">babel</a></li>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-pwa" target="_blank" rel="noopener">pwa</a></li>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-router" target="_blank" rel="noopener">router</a></li>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-vuex" target="_blank" rel="noopener">vuex</a></li>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-eslint" target="_blank" rel="noopener">eslint</a></li>
-    </ul>
-    <h3>Essential Links</h3>
-    <ul>
-      <li><a href="https://vuejs.org" target="_blank" rel="noopener">Core Docs</a></li>
-      <li><a href="https://forum.vuejs.org" target="_blank" rel="noopener">Forum</a></li>
-      <li><a href="https://chat.vuejs.org" target="_blank" rel="noopener">Community Chat</a></li>
-      <li><a href="https://twitter.com/vuejs" target="_blank" rel="noopener">Twitter</a></li>
-      <li><a href="https://news.vuejs.org" target="_blank" rel="noopener">News</a></li>
-    </ul>
-    <h3>Ecosystem</h3>
-    <ul>
-      <li><a href="https://router.vuejs.org" target="_blank" rel="noopener">vue-router</a></li>
-      <li><a href="https://vuex.vuejs.org" target="_blank" rel="noopener">vuex</a></li>
-      <li><a href="https://github.com/vuejs/vue-devtools#vue-devtools" target="_blank" rel="noopener">vue-devtools</a></li>
-      <li><a href="https://vue-loader.vuejs.org" target="_blank" rel="noopener">vue-loader</a></li>
-      <li><a href="https://github.com/vuejs/awesome-vue" target="_blank" rel="noopener">awesome-vue</a></li>
-    </ul>
-  </div>
+<v-container>
+  <v-autocomplete :items="dataSourceFrom.display" v-model="dataSourceFrom" @input="onSearch($event, 'from')"
+        @select="selectPlace($event, 'from')">
+  </v-autocomplete>
+  <v-btn @click="onSearch('New York', 'from')"> Bonjour </v-btn>
+</v-container>
 </template>
 
 <script>
-export default {
+  import store from '@/store';
+  export default {
   name: 'HelloWorld',
-  props: {
-    msg: String
+  data() {
+    return {
+      dataSourceFrom: [],
+      dataSourceTo: [],
+      trip: "one",
+      source: null,
+      destination: null,
+      outbound: null,
+      inbound: null,
+     };
+  },
+  methods: {
+    onSearch(searchText, type) {
+      console.log("fonction lancée");
+      if (searchText.length > 2) {
+        var source = [];
+        console.log(type);
+        store.dispatch("searchPlaces", searchText).then((data) => {
+          console.log(data);
+          // if (data.length) {
+            source = data.map((item) => {
+              return {
+                city: item.presentation.title,
+                airport: item.navigation.entityId,
+                display: `${item.presentation.title} (${item.navigation.localizedName})`,
+              };
+            });
+            console.log(source);
+          // }
+          if (type == "from") {
+            this.dataSourceFrom = source;
+          } else {
+            this.dataSourceTo = source;
+          }
+        });
+      }
+    },
+    selectPlace(value, type) {
+      if (type == "from") {
+        this.source = {
+          id: value.value,
+          name: value.city,
+        };
+      } else {
+        this.destination = {
+          id: value.value,
+          name: value.city,
+        };
+      }
+    },
+    isValid() {
+      if (this.trip == "one") {
+        if (
+          this.source &&
+          this.destination &&
+          this.outbound &&
+          this.source.id !== this.destination.id
+        ) {
+          return true;
+        } else {
+          return false;
+        }
+      } else {
+        if (
+          this.source &&
+          this.destination &&
+          this.outbound &&
+          this.inbound &&
+          this.source.id !== this.destination.id
+        ) {
+          return true;
+        } else {
+          return false;
+        }
+      }
+    },
   }
-}
+  }
 </script>
-
-<!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
-h3 {
-  margin: 40px 0 0;
-}
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-li {
-  display: inline-block;
-  margin: 0 10px;
-}
-a {
-  color: #42b983;
-}
-</style>
